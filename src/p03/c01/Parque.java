@@ -6,26 +6,28 @@ import java.util.Hashtable;
 public class Parque implements IParque{
 
 
-	// TODO 
+	private int aforo;
 	private int contadorPersonasTotales;
 	private Hashtable<String, Integer> contadoresPersonasPuerta;
 	
 	
-	public Parque() {
+	
+	public Parque(int aforo) {
+		this.aforo=aforo;
 		contadorPersonasTotales = 0;
 		contadoresPersonasPuerta = new Hashtable<String, Integer>();
 	}
 
 
 	@Override
-	public void entrarAlParque(String puerta){		// TODO
+	public void entrarAlParque(String puerta) throws InterruptedException{		// TODO
 		
 		// Si no hay entradas por esa puerta, inicializamos
 		if (contadoresPersonasPuerta.get(puerta) == null){
 			contadoresPersonasPuerta.put(puerta, 0);
 		}
 		
-		// TODO
+		comprobarAntesDeEntrar();
 				
 		
 		// Aumentamos el contador total y el individual
@@ -35,16 +37,26 @@ public class Parque implements IParque{
 		// Imprimimos el estado del parque
 		imprimirInfo(puerta, "Entrada");
 		
-		// TODO
-		
-		
-		// TODO
-		
+		checkInvariante();
+		notifyAll();
 	}
 	
-	// 
-	// TODO Método salirDelParque
-	//
+	public synchronized void SalirDelParque(String puerta) throws InterruptedException  {
+		if (contadoresPersonasPuerta.get(puerta) == null){
+				contadoresPersonasPuerta.put(puerta, 0);
+			}
+			
+			comprobarAntesDeSalir();
+			
+			
+			contadorPersonasTotales--;		
+			contadoresPersonasPuerta.put(puerta, contadoresPersonasPuerta.get(puerta)-1);
+			
+			imprimirInfo(puerta, "Salida");
+		
+			checkInvariante();
+			notifyAll();
+	}
 	
 	
 	private void imprimirInfo (String puerta, String movimiento){
@@ -69,23 +81,29 @@ public class Parque implements IParque{
 	
 	protected void checkInvariante() {
 		assert sumarContadoresPuerta() == contadorPersonasTotales : "INV: La suma de contadores de las puertas debe ser igual al valor del contador del parte";
-		// TODO 
-		// TODO
-		
-		
-		
+		assert ((contadorPersonasTotales <= aforo) || (contadorPersonasTotales >= 0)) : "El aforo máximo es 50 y el mínimo 0";
+				
 	}
 
-	protected void comprobarAntesDeEntrar(){
-		//
-		// TODO
-		//
+	protected synchronized void comprobarAntesDeEntrar() throws InterruptedException{	
+		if (contadorPersonasTotales >= aforo) {
+			try {
+				wait();
+			}catch(InterruptedException ex) {
+				ex.printStackTrace();
+			}
+					
+		}
 	}
 
-	protected void comprobarAntesDeSalir(){
-		//
-		// TODO
-		//
+	protected synchronized void comprobarAntesDeSalir() throws InterruptedException{		
+		if (contadorPersonasTotales <= 0) {
+			try {
+				wait();
+			}catch(InterruptedException ex) {
+				ex.printStackTrace();
+			}
+		}
 	}
 
 
